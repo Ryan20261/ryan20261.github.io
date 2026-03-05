@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Course Creator Interview Scorecard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f1117; font-family: Georgia, serif; color: #e2e8f0; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0f1117; }
+  ::-webkit-scrollbar-thumb { background: #2d4060; border-radius: 3px; }
+  textarea:focus, input:focus { box-shadow: 0 0 0 2px #0ea5e944; }
+  button:hover { opacity: 0.88; }
+
+  @media print {
+    @page { margin: 0.6in; size: A4; }
+    body { background: #fff !important; color: #111 !important; font-family: Georgia, serif; }
+    .no-print { display: none !important; }
+    .print-card { background: #fff !important; border: 1px solid #ddd !important; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; page-break-inside: avoid; }
+    .print-score-chip { font-weight: 800; font-size: 18px; }
+    .print-note { background: #f8f8f8 !important; border-radius: 6px; padding: 6px 10px; font-style: italic; color: #555 !important; font-size: 12px; margin-top: 6px; }
+    .print-rating-box { background: #f0f9ff !important; border: 2px solid #0ea5e9 !important; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; }
+    .print-q-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #0ea5e9 !important; }
+    .print-q-text { font-size: 13px; color: #222 !important; margin-top: 3px; }
+    .print-header-bar { border-bottom: 2px solid #0ea5e9; padding-bottom: 12px; margin-bottom: 20px; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const ACCENT = "#0ea5e9";
+
+const questions = [
+  {
+    id: 1,
+    category: "Course Creation Experience",
+    question: "Can you walk me through your experience creating learning content or courses? What types of courses have you personally built?",
+    followUps: [
+      "What parts of the course creation process do you personally handle?",
+      "Do you write lesson content or scripts?"
+    ],
+    strongSignals: [
+      '"I built modules / lessons"',
+      '"I wrote scripts"',
+      '"I structured course flows"',
+      "Hands-on production experience"
+    ],
+    redFlags: ["Only designed frameworks or managed SMEs — didn't build content themselves"]
+  },
+  {
+    id: 2,
+    category: "Translating Subject Matter Expertise",
+    question: "Have you worked with subject matter experts before? How do you turn their expertise into an engaging course?",
+    followUps: [
+      "How do you simplify complex topics?",
+      "How do you structure lessons from raw expert knowledge?"
+    ],
+    strongSignals: [
+      "Direct collaboration with SMEs",
+      "Ability to simplify complex information",
+      "Structures clear learning objectives",
+      "Bridges expert knowledge and learner needs"
+    ],
+    redFlags: ['"The SMEs created the content" — passive role only']
+  },
+  {
+    id: 3,
+    category: "Microlearning / Short-Form Design",
+    question: "If you were asked to design a 15–20 minute course teaching a specific skill, how would you structure it?",
+    followUps: [],
+    strongSignals: [
+      "Clear learning objective upfront",
+      "Short modular lesson structure",
+      "Interactive checkpoints or quizzes",
+      "Learner engagement built in"
+    ],
+    redFlags: ["No structure described — vague or theoretical answer"]
+  },
+  {
+    id: 4,
+    category: "Engagement & Learning Experience",
+    question: "What techniques do you use to make learning content engaging rather than just informational?",
+    followUps: [],
+    strongSignals: [
+      "Interaction / activities",
+      "Storytelling or scenarios",
+      "Quizzes or knowledge checks",
+      "Scenario-based learning"
+    ],
+    redFlags: ["Describes purely passive / read-and-watch content only"]
+  },
+  {
+    id: 5,
+    category: "Tools & Platforms",
+    question: "What tools or platforms have you used to create learning content or courses?",
+    followUps: [],
+    strongSignals: [
+      "Articulate / Storyline / Rise",
+      "LMS tools (Teachable, TalentLMS, etc.)",
+      "Video scripting or production tools",
+      "Hands-on production — not just consumption"
+    ],
+    redFlags: ["Only consumed courses, never built with tools"]
+  },
+  {
+    id: 6,
+    category: "Work Samples & Portfolio",
+    question: "Do you have examples of courses, modules, or learning content you've built that you could share with the team?",
+    followUps: [
+      "If no portfolio: What deliverables would you typically create for a short skill course?"
+    ],
+    strongSignals: [
+      "Has a portfolio or shareable samples",
+      "Can describe specific deliverables (scripts, storyboards, modules)",
+      "Mentions lesson plans, video scripts, assessments"
+    ],
+    redFlags: ["No examples and can't describe what they'd produce"]
+  },
+  {
+    id: 7,
+    category: "Hands-On & Small Team Fit",
+    question: "This role involves actually building course content — not just designing the strategy. Is that the type of work you enjoy?",
+    followUps: [],
+    strongSignals: [
+      "Enthusiastic about doing the work, not just managing it",
+      "Comfortable being hands-on and self-directed",
+      "Mentions enjoying the craft of building"
+    ],
+    redFlags: ['"I prefer to lead the strategy" — wants to delegate the building']
+  },
+];
+
+const SCORE_LABELS = {
+  0:{label:"Not Scored",color:"#94a3b8"},
+  1:{label:"Poor",color:"#ef4444"},
+  2:{label:"Below Avg",color:"#f97316"},
+  3:{label:"Average",color:"#eab308"},
+  4:{label:"Good",color:"#22c55e"},
+  5:{label:"Excellent",color:ACCENT},
+};
+
+function App() {
+  const [scores, setScores] = useState({});
+  const [notes, setNotes] = useState({});
+  const [candidateName, setCandidateName] = useState("");
+  const [activeQ, setActiveQ] = useState(1);
+  const [showSummary, setShowSummary] = useState(false);
+
+  const setScore = (id, score) => setScores(s => ({...s, [id]: score}));
+  const setNote = (id, val) => setNotes(n => ({...n, [id]: val}));
+
+  const scored = Object.values(scores).filter(s => s > 0);
+  const totalScore = scored.reduce((a,b) => a+b, 0);
+  const maxPossible = scored.length * 5;
+  const avgScore = scored.length ? (totalScore / scored.length).toFixed(1) : "—";
+  const pct = maxPossible ? Math.round((totalScore / maxPossible) * 100) : 0;
+
+  const overallRating =
+    avgScore === "—" ? "Pending"
+    : avgScore >= 4.5 ? "Strong Hire"
+    : avgScore >= 3.5 ? "Hire"
+    : avgScore >= 2.5 ? "Maybe"
+    : "No Hire";
+
+  const ratingColor =
+    overallRating === "Strong Hire" ? ACCENT
+    : overallRating === "Hire" ? "#22c55e"
+    : overallRating === "Maybe" ? "#eab308"
+    : overallRating === "No Hire" ? "#ef4444"
+    : "#94a3b8";
+
+  const current = questions.find(q => q.id === activeQ);
+
+  return (
+    <div style={{fontFamily:"Georgia,serif",background:"#0f1117",minHeight:"100vh",color:"#e2e8f0",display:"flex",flexDirection:"column"}}>
+      {/* Header */}
+      <div style={{background:"#0d1b2a",borderBottom:"1px solid #1a3050",padding:"16px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+        <div>
+          <div style={{fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase",color:ACCENT,marginBottom:3}}>Recruiter Screening</div>
+          <div style={{fontSize:18,fontWeight:700,color:"#f1f5f9",letterSpacing:"-0.5px"}}>Course Creator Interview Scorecard</div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <input
+            value={candidateName}
+            onChange={e => setCandidateName(e.target.value)}
+            placeholder="Candidate name..."
+            style={{background:"#1a3050",border:"1px solid #2a4060",borderRadius:8,padding:"7px 12px",color:"#e2e8f0",fontSize:13,width:180,outline:"none"}}
+          />
+          <button
+            onClick={() => setShowSummary(!showSummary)}
+            style={{background:showSummary?ACCENT:"transparent",border:`1px solid ${ACCENT}`,color:showSummary?"#fff":ACCENT,borderRadius:8,padding:"7px 16px",fontSize:12,cursor:"pointer",fontFamily:"inherit",transition:"all 0.2s"}}
+          >
+            {showSummary ? "← Back" : "Summary →"}
+          </button>
+        </div>
+      </div>
+
+      {showSummary ? (
+        <div style={{padding:"28px 24px",maxWidth:740,margin:"0 auto",width:"100%"}}>
+          {/* Screen summary header */}
+          <div className="no-print" style={{background:"#0d1b2a",border:"1px solid #1a3050",borderRadius:16,padding:24,marginBottom:20,textAlign:"center"}}>
+            <div style={{fontSize:11,color:"#94a3b8",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Overall Recommendation</div>
+            <div style={{fontSize:38,fontWeight:800,color:ratingColor,letterSpacing:"-1px",marginBottom:4}}>{overallRating}</div>
+            <div style={{color:"#94a3b8",fontSize:13}}>{scored.length}/{questions.length} scored · Avg: {avgScore}/5 · {pct}% of scored potential</div>
+            {candidateName && <div style={{marginTop:10,fontSize:15,color:"#e2e8f0"}}>Candidate: <strong>{candidateName}</strong></div>}
+            <button
+              onClick={() => window.print()}
+              style={{marginTop:16,background:ACCENT,border:"none",color:"#fff",borderRadius:8,padding:"9px 22px",fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:600}}
+            >⬇ Export to PDF</button>
+          </div>
+
+          {/* Print header (hidden on screen) */}
+          <div className="print-header-bar" style={{display:"none"}}>
+            <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"0.15em",color:ACCENT,marginBottom:3}}>Recruiter Screening · Course Creator Interview</div>
+            <div style={{fontSize:20,fontWeight:700,color:"#111"}}>Course Creator Interview Scorecard</div>
+            {candidateName && <div style={{fontSize:14,marginTop:4,color:"#444"}}>Candidate: <strong>{candidateName}</strong></div>}
+          </div>
+          <div className="print-rating-box" style={{display:"none"}}>
+            <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.1em",color:ACCENT,marginBottom:4}}>Overall Recommendation</div>
+            <div style={{fontSize:36,fontWeight:800,color:ratingColor}}>{overallRating}</div>
+            <div style={{color:"#555",fontSize:13,marginTop:4}}>{scored.length}/{questions.length} scored · Avg: {avgScore}/5</div>
+          </div>
+
+          {/* Question rows */}
+          {questions.map(q => {
+            const s = scores[q.id] || 0;
+            const info = SCORE_LABELS[s];
+            return (
+              <div key={q.id} className="print-card" style={{background:"#0d1b2a",border:`1px solid ${s>0?info.color+"40":"#1a3050"}`,borderRadius:12,padding:"14px 18px",marginBottom:8}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:notes[q.id]?8:0}}>
+                  <div style={{flex:1,marginRight:16}}>
+                    <span className="print-q-label" style={{fontSize:10,color:ACCENT,textTransform:"uppercase",letterSpacing:"0.1em"}}>Q{q.id} · {q.category}</span>
+                    <div className="print-q-text" style={{fontSize:13,color:"#cbd5e1",marginTop:2}}>{q.question}</div>
+                  </div>
+                  <div style={{textAlign:"right",minWidth:70}}>
+                    {s > 0 ? (
+                      <>
+                        <div className="print-score-chip" style={{fontSize:20,fontWeight:800,color:info.color}}>{s}/5</div>
+                        <div style={{fontSize:10,color:info.color}}>{info.label}</div>
+                      </>
+                    ) : (
+                      <div style={{fontSize:13,color:"#475569"}}>—</div>
+                    )}
+                  </div>
+                </div>
+                {notes[q.id] && (
+                  <div className="print-note" style={{background:"#0f1117",borderRadius:8,padding:"7px 11px",fontSize:12,color:"#94a3b8",fontStyle:"italic"}}>{notes[q.id]}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div style={{display:"flex",flex:1,overflow:"hidden",height:"calc(100vh - 64px)"}}>
+          {/* Sidebar */}
+          <div style={{width:200,background:"#080f18",borderRight:"1px solid #1a3050",padding:"12px 0",overflowY:"auto",flexShrink:0}}>
+            {questions.map(q => {
+              const s = scores[q.id] || 0;
+              const isActive = q.id === activeQ;
+              return (
+                <button key={q.id} onClick={() => setActiveQ(q.id)} style={{display:"flex",alignItems:"center",gap:9,width:"100%",padding:"9px 14px",background:isActive?"#1a3050":"transparent",border:"none",borderLeft:isActive?`3px solid ${ACCENT}`:"3px solid transparent",cursor:"pointer",textAlign:"left",transition:"all 0.15s"}}>
+                  <div style={{width:24,height:24,borderRadius:"50%",flexShrink:0,background:s>0?SCORE_LABELS[s].color:"#1a3050",border:`2px solid ${s>0?SCORE_LABELS[s].color:"#2a4060"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:s>0?"#fff":"#475569"}}>
+                    {s > 0 ? s : q.id}
+                  </div>
+                  <div style={{fontSize:11,color:isActive?"#e2e8f0":"#64748b",lineHeight:1.3}}>{q.category}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Main */}
+          <div style={{flex:1,overflowY:"auto",padding:"28px"}}>
+            <div style={{maxWidth:640}}>
+              {/* Progress */}
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:24}}>
+                <div style={{flex:1,height:3,background:"#1a3050",borderRadius:2,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${(scored.length/questions.length)*100}%`,background:`linear-gradient(90deg,${ACCENT},#22c55e)`,borderRadius:2,transition:"width 0.3s"}} />
+                </div>
+                <div style={{fontSize:11,color:"#475569",whiteSpace:"nowrap"}}>{scored.length}/{questions.length} scored</div>
+              </div>
+
+              {/* Question card */}
+              <div style={{background:"#0d1b2a",border:"1px solid #1a3050",borderRadius:14,padding:24,marginBottom:16}}>
+                <span style={{fontSize:10,color:ACCENT,textTransform:"uppercase",letterSpacing:"0.15em",fontFamily:"monospace"}}>Q{current.id} of {questions.length} · {current.category}</span>
+                <p style={{fontSize:18,fontWeight:600,color:"#f1f5f9",lineHeight:1.55,margin:"12px 0 0 0"}}>"{current.question}"</p>
+                {current.followUps.length > 0 && (
+                  <div style={{background:"#080f18",borderRadius:10,padding:"12px 14px",marginTop:16}}>
+                    <div style={{fontSize:10,color:"#475569",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:7}}>Follow-up Prompts</div>
+                    {current.followUps.map((f,i) => (
+                      <div key={i} style={{fontSize:12,color:"#94a3b8",padding:"3px 0",borderTop:i>0?"1px solid #1a3050":"none"}}>→ {f}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Signals */}
+              <div style={{display:"grid",gridTemplateColumns:current.redFlags.length?"1fr 1fr":"1fr",gap:10,marginBottom:16}}>
+                <div style={{background:"#0d1f0d",border:"1px solid #14532d",borderRadius:10,padding:"12px 14px"}}>
+                  <div style={{fontSize:10,color:"#4ade80",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:7}}>✅ Strong Signals</div>
+                  {current.strongSignals.map((s,i) => <div key={i} style={{fontSize:12,color:"#86efac",padding:"2px 0"}}>• {s}</div>)}
+                </div>
+                {current.redFlags.length > 0 && (
+                  <div style={{background:"#1f0d0d",border:"1px solid #7f1d1d",borderRadius:10,padding:"12px 14px"}}>
+                    <div style={{fontSize:10,color:"#f87171",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:7}}>🚩 Red Flags</div>
+                    {current.redFlags.map((f,i) => <div key={i} style={{fontSize:12,color:"#fca5a5",padding:"2px 0"}}>• {f}</div>)}
+                  </div>
+                )}
+              </div>
+
+              {/* Score */}
+              <div style={{background:"#0d1b2a",border:"1px solid #1a3050",borderRadius:12,padding:18,marginBottom:14}}>
+                <div style={{fontSize:11,color:"#64748b",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:12}}>Score this answer</div>
+                <div style={{display:"flex",gap:8,marginBottom:14}}>
+                  {[1,2,3,4,5].map(n => {
+                    const info = SCORE_LABELS[n];
+                    const selected = scores[current.id] === n;
+                    return (
+                      <button key={n} onClick={() => setScore(current.id, n)} style={{flex:1,padding:"10px 4px",borderRadius:9,cursor:"pointer",border:`2px solid ${selected?info.color:"#1a3050"}`,background:selected?info.color+"22":"transparent",color:selected?info.color:"#475569",transition:"all 0.15s",fontFamily:"inherit"}}>
+                        <div style={{fontSize:18,fontWeight:800}}>{n}</div>
+                        <div style={{fontSize:9,marginTop:2}}>{info.label}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <textarea
+                  value={notes[current.id] || ""}
+                  onChange={e => setNote(current.id, e.target.value)}
+                  placeholder="Notes on this answer..."
+                  rows={3}
+                  style={{width:"100%",background:"#080f18",border:"1px solid #1a3050",borderRadius:8,padding:"9px 11px",color:"#e2e8f0",fontSize:12,resize:"vertical",outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}
+                />
+              </div>
+
+              {/* Nav */}
+              <div style={{display:"flex",justifyContent:"space-between"}}>
+                <button onClick={() => setActiveQ(p => Math.max(1,p-1))} disabled={activeQ===1} style={{background:"transparent",border:"1px solid #1a3050",color:activeQ===1?"#2a4060":"#94a3b8",borderRadius:8,padding:"8px 18px",cursor:activeQ===1?"not-allowed":"pointer",fontSize:12,fontFamily:"inherit"}}>← Previous</button>
+                {activeQ < questions.length
+                  ? <button onClick={() => setActiveQ(p => Math.min(questions.length,p+1))} style={{background:ACCENT,border:"none",color:"#fff",borderRadius:8,padding:"8px 18px",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>Next →</button>
+                  : <button onClick={() => setShowSummary(true)} style={{background:"#22c55e",border:"none",color:"#fff",borderRadius:8,padding:"8px 18px",cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:600}}>View Summary →</button>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
